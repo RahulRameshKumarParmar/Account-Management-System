@@ -19,17 +19,15 @@ export default function AccountPage() {
   //Continue From Here 
 
   useEffect(() => {
-    const getData = localStorage.getItem('currentUser');
-    if (getData) {
-      const user = JSON.parse(getData);
+    if (currentUser) {
       setFormData({
-        firstName: user.firstName || '',
-        lastName: user.lastName || '',
-        email: user.email || '',
-        phone: user.phone || '',
+        firstName: currentUser.firstName || '',
+        lastName: currentUser.lastName || '',
+        email: currentUser.email || '',
+        phone: currentUser.phone || '',
       })
     }
-  }, [])
+  }, [currentUser])
 
   // Handle input changes in edit mode
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -41,6 +39,7 @@ export default function AccountPage() {
 
   // Save updated user information
   const handleSave = () => {
+
     dispatch(updateUser(formData));
     setIsEditing(false);
     setSuccess('Account information updated successfully!');

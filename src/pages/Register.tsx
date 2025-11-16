@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { changePage, type User } from "../features/authSlice";
 import { useAppDispatch, useAppSelector } from "../hooks";
 import { register } from "../features/authSlice";
@@ -6,7 +6,6 @@ import { register } from "../features/authSlice";
 export default function RegisterPage() {
 
     const dispatch = useAppDispatch();
-    const currentUser = useAppSelector((state) => state.auth.currentUser);
     const users = useAppSelector((state) => state.auth.users);
 
     const [formData, setFormData] = useState({
@@ -18,13 +17,6 @@ export default function RegisterPage() {
         phone: ''
     });
     const [error, setError] = useState('');
-    const [attemptedRegister, setAttemptedRegister] = useState(false);
-
-    useEffect(() => {
-        if (attemptedRegister && currentUser) {
-            setAttemptedRegister(false);
-        }
-    }, [attemptedRegister, currentUser])
 
     // Handle input changes
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -70,8 +62,6 @@ export default function RegisterPage() {
             lastName: formData.lastName,
             phone: formData.phone
         }));
-
-        setAttemptedRegister(true);
     };
 
     return (

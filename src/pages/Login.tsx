@@ -6,6 +6,7 @@ export default function LoginPage() {
 
   const dispatch = useAppDispatch();
   const users = useAppSelector((state) => state.auth.users);
+  const currentUser = useAppSelector((state) => state.auth.currentUser);
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -24,6 +25,7 @@ export default function LoginPage() {
     const loginDetailsExists = users.some((u) => u.email === email && u.password === password);
     if(!loginDetailsExists){
       setError('Invalid Email or Password');
+      return;
     }
 
     dispatch(login({email, password}));

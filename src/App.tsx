@@ -3,19 +3,27 @@ import RegisterPage from './pages/Register';
 import AccountPage from './pages/Account';
 import { useAppDispatch, useAppSelector } from './hooks';
 import { useEffect } from 'react';
-import { changePage } from './features/authSlice';
+import { initializeAuth } from './features/authSlice';
+
+// Main App Component
 
 export default function App() {
 
   const dispatch = useAppDispatch();
   const currentPage = useAppSelector((state) => state.auth.currentPage);
+  const isIntialized = useAppSelector((state) => state.auth.isIntialized);
 
   useEffect(() => {
-    const getPage = localStorage.getItem('page');
-    if (getPage === 'login' || getPage === 'register' || getPage === 'account') {
-      dispatch(changePage(getPage));
-    }
-  }, [])
+    dispatch(initializeAuth());
+  }, [dispatch])
+
+  if(!isIntialized){
+    return(
+      <div className='min-h-screen bg-gray-100 flex items-center justify-center'>
+        <div className='text-gray-600'>Loading...</div>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-gray-100">
