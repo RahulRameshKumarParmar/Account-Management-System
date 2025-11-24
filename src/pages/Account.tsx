@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
-import { logout, updateUser } from "../features/authSlice";
+import { deleteUser, logout, updateUser } from "../features/authSlice";
 import { useAppDispatch, useAppSelector } from "../hooks";
+import { FaTrashCan } from "react-icons/fa6";
 
 export default function AccountPage() {
 
@@ -15,6 +16,19 @@ export default function AccountPage() {
     phone: currentUser?.phone || ''
   });
   const [success, setSuccess] = useState('');
+  const BgColour: string[] = ['#fca5a5', '#d1d5db', '#d8b4fe', '#86efac', '#fde047', '#93c5fd'];
+  const [bg, setBG] = useState<string>("");
+  const [profileInitials, setProfileInitials] = useState<string>();
+
+  useEffect(() => {
+    if (!currentUser) return;
+
+    const randomBgColour = BgColour[Math.floor(Math.random() * BgColour.length)];
+    setBG(randomBgColour);
+
+    const initials = formData.firstName.charAt(0) + formData.lastName.charAt(0);
+    setProfileInitials(initials);
+  }, []);
 
   //Continue From Here 
 
@@ -57,6 +71,12 @@ export default function AccountPage() {
     setIsEditing(false);
   };
 
+  const handleLogout = () => {
+    if (window.confirm('Are you sure you want to Logout?')) {
+      dispatch(logout());
+    }
+  }
+
   return (
     <div className="min-h-screen py-8">
       <div className="max-w-2xl mx-auto px-4">
@@ -64,12 +84,17 @@ export default function AccountPage() {
           {/* Header with logout button */}
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-2xl font-bold text-gray-800">My Account</h2>
-            <button
-              onClick={() => dispatch(logout())}
-              className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 transition duration-200"
-            >
-              Logout
-            </button>
+            <div className="flex items-center">
+              <div style={{ backgroundColor: bg }} className={`user-profile-avatar-initials border border-white rounded-full h-12 w-12 me-5 text-white font-bold text-2xl flex items-center justify-center`}>
+                {profileInitials}
+              </div>
+              <button
+                onClick={handleLogout}
+                className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 transition duration-200"
+              >
+                Logout
+              </button>
+            </div>
           </div>
 
           {success && (
@@ -178,6 +203,18 @@ export default function AccountPage() {
                 Edit Account
               </button>
             )}
+          </div>
+
+          <div className="deleteAccount flex justify-center">
+            <button
+              onClick={() => {
+                dispatch(deleteUser(currentUser?.email));
+              }
+              }
+              className="mt-4 flex items-center gap-3 cursor-pointer hover:bg-red-100 py-2 px-3 transition-colors rounded-3xl">
+              <FaTrashCan color="red" />
+              Delete Account
+            </button>
           </div>
         </div>
       </div>

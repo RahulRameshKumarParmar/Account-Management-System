@@ -2,6 +2,7 @@ import { useState } from "react";
 import { changePage, type User } from "../features/authSlice";
 import { useAppDispatch, useAppSelector } from "../hooks";
 import { register } from "../features/authSlice";
+import { FaEye, FaEyeSlash } from "react-icons/fa";
 
 export default function RegisterPage() {
 
@@ -17,6 +18,7 @@ export default function RegisterPage() {
         phone: ''
     });
     const [error, setError] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
 
     // Handle input changes
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -137,18 +139,22 @@ export default function RegisterPage() {
                     </div>
 
                     {/* Password input */}
-                    <div className="mb-4">
+                    <div className="mb-4 relative">
                         <label className="block text-gray-700 text-sm font-bold mb-2">
                             Password *
                         </label>
                         <input
-                            type="password"
+                            type={showPassword ? 'text' : 'password'}
                             name="password"
                             value={formData.password}
                             onChange={handleChange}
                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                             placeholder="Enter your password"
                         />
+                        <span
+                            onClick={() => setShowPassword(!showPassword)}
+                            className="w-fit h-fit text-xl cursor-pointer absolute bottom-2.5 right-3">{showPassword ? <FaEye /> : <FaEyeSlash />}
+                        </span>
                     </div>
 
                     {/* Confirm Password input */}

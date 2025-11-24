@@ -24,6 +24,7 @@ export interface AuthContextType {
     register: (userData: Omit<User, 'id'>) => boolean;
     logout: () => void;
     updateUser: (userData: Partial<User>) => void;
+    deleteUser: (email: string) => void;
 }
 
 const initialState: States = {
@@ -65,7 +66,7 @@ const authSlice = createSlice({
 
         initializeAuth: (state) => {
             //First loading all users from localStorage
-            const storedUsers = safeParseJSON<User[]>('allUsers', []);
+            const storedUsers = safeParseJSON<User[]>('users', []);
             state.users = storedUsers;
 
             // Loading current user from localStorage
@@ -112,7 +113,7 @@ const authSlice = createSlice({
             state.currentUser = newUser;
             state.currentPage = "account";
             safeSaveToLocalStorage('currentUser', newUser);
-            safeSaveToLocalStorage('allUsers', state.users);
+            safeSaveToLocalStorage('users', state.users);
             localStorage.setItem("page", 'account');
         }),
 
@@ -121,7 +122,6 @@ const authSlice = createSlice({
             state.currentPage = 'login';
 
             // Clearing localStorage after user logout
-            localStorage.removeItem('currentUser');
             localStorage.setItem('page', 'login');
         }),
 
@@ -141,12 +141,21 @@ const authSlice = createSlice({
                     state.users[index] = state.currentUser;
                     
                     safeSaveToLocalStorage('currentUser', updatedUser);
-                    safeSaveToLocalStorage('allUsers', state.users);
+                    safeSaveToLocalStorage('users', state.users);
                 }
             }
-        })
+        }),
+
+        deleteUser: ((state, action) => {
+            state.users = state.users.filter((u) => u.email !== action.payload);
+            state.currentUser = null;
+            const removeUser = state.users.filter((u) => u.email !== action.payload);
+            safeSaveToLocalStorage('users', removeUser);
+            safeSaveToLocalStorage('currentUser', null);
+            state.currentPage = 'login';
+        }),
     }
 })
 
-export const { initializeAuth, changePage, login, register, updateUser, logout } = authSlice.actions;
+export const { initializeAuth, changePage, login, register, updateUser, logout, deleteUser,} = authSlice.actions;
 export default authSlice.reducer;
