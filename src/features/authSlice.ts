@@ -1,6 +1,6 @@
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
 
-type Page = 'login' | 'register' | 'account';
+type Page = 'login' | 'register' | 'account' | 'adminLogin';
 
 export interface User {
     id: string;
@@ -9,13 +9,15 @@ export interface User {
     firstName: string;
     lastName: string;
     phone: string;
+    lastLogin?: number;
 }
 
 interface States {
     currentPage: Page,
     users: User[],
     currentUser: User | null,
-    isIntialized: boolean,
+    isInitialized: boolean,
+    adminLog: 'false' | 'true',
 }
 
 export interface AuthContextType {
@@ -31,18 +33,19 @@ const initialState: States = {
     currentPage: 'login',
     users: [],
     currentUser: null,
-    isIntialized: false,
+    isInitialized: false,
+    adminLog: 'false',
 }
 
 // Safely parse JSON from localStorage
 // Returns default value if parsing fails
 
 const safeParseJSON = <T>(key: string, defaultValue: T): T => {
-    try{
+    try {
         const item = localStorage.getItem(key);
         return item ? JSON.parse(item) : defaultValue;
     }
-    catch (error){
+    catch (error) {
         console.error(`Error parsing ${key} from localStorage:`, error);
         return defaultValue;
     }
@@ -50,11 +53,11 @@ const safeParseJSON = <T>(key: string, defaultValue: T): T => {
 
 // Safely save data to localStorage
 
-const safeSaveToLocalStorage = <T>(key: string, value: T) : void => {
-    try{
+const safeSaveToLocalStorage = <T>(key: string, value: T): void => {
+    try {
         localStorage.setItem(key, JSON.stringify(value));
     }
-    catch(error){
+    catch (error) {
         console.error(`Error while saving ${key} to localStorage:`, error);
     }
 };
@@ -75,12 +78,22 @@ const authSlice = createSlice({
 
             // Loading current page from localStorage
             const storedPage = localStorage.getItem('page');
-            if(storedPage === 'login' || storedPage === 'register' || storedPage === 'account'){
+            if (storedPage === 'login' || storedPage === 'register' || storedPage === 'account') {
                 state.currentPage = storedPage;
             }
 
+            // Checking whether login is done by Admin or not
+            try {
+                const isAdminLog = localStorage.getItem('logginByAdmin') || '';
+                const adminLogStatus = isAdminLog ? JSON.parse(isAdminLog) : null;
+                state.adminLog = adminLogStatus;
+            }
+            catch(error){
+                console.error('Error while parsing data from local Storage: ' + error);
+            }
+
             // Mark as initialize
-            state.isIntialized = true;
+            state.isInitialized = true;
 
         },
 
@@ -91,13 +104,30 @@ const authSlice = createSlice({
 
         login: ((state, action: PayloadAction<{ email: string, password: string }>) => {
 
+            const userIndex = state.users.findIndex((u) => u.email === action.payload.email || u.password === action.payload.password);
+
+            if (userIndex !== 1) {
+                state.currentUser = state.users[userIndex];
+                safeSaveToLocalStorage('currentUser', state.currentUser);
+            }
+
             const user = state.users.find((u: Pick<User, 'email' | 'password'>) => u.email === action.payload.email && u.password === action.payload.password);
 
             if (user) {
-                state.currentUser = user;
-                safeSaveToLocalStorage('currentUser', user);
+                safeSaveToLocalStorage('users', state.users);
+
                 state.currentPage = 'account';
                 localStorage.setItem('page', 'account');
+            }
+        }),
+
+        adminLogin: ((state, action: PayloadAction<{ email: string, password: string }>) => {
+            if (action.payload.email === 'prakash@gmail.com' && action.payload.password === 'prakash123#$') {
+                state.currentPage = 'account';
+                localStorage.setItem('page', 'account');
+
+                state.adminLog = 'true';
+                localStorage.setItem('logginByAdmin', 'true');
             }
         }),
 
@@ -117,19 +147,27 @@ const authSlice = createSlice({
             localStorage.setItem("page", 'account');
         }),
 
-        logout: ((state) => {
+        logout: ((state, action: PayloadAction<string | null>) => {
             state.currentUser = null;
             state.currentPage = 'login';
 
             // Clearing localStorage after user logout
             localStorage.setItem('page', 'login');
+            safeSaveToLocalStorage('currentUser', state.currentUser);
+
+            const userIndex: number = state.users.findIndex((u) => u.email === action.payload);
+
+            if (userIndex !== -1) {
+                state.users[userIndex].lastLogin = Date.now();
+                safeSaveToLocalStorage('users', state.users);
+            }
         }),
 
         updateUser: ((state, action) => {
             if (state.currentUser) {
-                const updatedUser = { 
-                    ...state.currentUser, 
-                    ...action.payload 
+                const updatedUser = {
+                    ...state.currentUser,
+                    ...action.payload
                 } as User
 
                 state.currentUser = updatedUser;
@@ -139,7 +177,7 @@ const authSlice = createSlice({
                 );
                 if (index !== -1) {
                     state.users[index] = state.currentUser;
-                    
+
                     safeSaveToLocalStorage('currentUser', updatedUser);
                     safeSaveToLocalStorage('users', state.users);
                 }
@@ -149,13 +187,13 @@ const authSlice = createSlice({
         deleteUser: ((state, action) => {
             state.users = state.users.filter((u) => u.email !== action.payload);
             state.currentUser = null;
-            const removeUser = state.users.filter((u) => u.email !== action.payload);
-            safeSaveToLocalStorage('users', removeUser);
-            safeSaveToLocalStorage('currentUser', null);
+            safeSaveToLocalStorage('users', state.users);
+            localStorage.removeItem('currentUser');
             state.currentPage = 'login';
+            localStorage.setItem('page', 'login');
         }),
     }
 })
 
-export const { initializeAuth, changePage, login, register, updateUser, logout, deleteUser,} = authSlice.actions;
+export const { initializeAuth, changePage, login, register, updateUser, logout, deleteUser, adminLogin } = authSlice.actions;
 export default authSlice.reducer;

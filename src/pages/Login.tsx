@@ -42,8 +42,16 @@ export default function LoginPage() {
     dispatch(login({ email, password }));
   };
 
+  const handleAdminPage = () => {
+    dispatch(changePage('adminLogin'));
+
+  }
+
   return (
-    <div className="flex items-center justify-center min-h-screen">
+    <div className="flex relative items-center justify-center min-h-screen">
+      <div className="absolute right-3 top-5 font-bold bg-white py-2 px-3 rounded-2xl cursor-pointer hover:bg-[#0f010148]">
+        <button onClick={handleAdminPage} className="cursor-pointer">Admin Login</button>
+      </div>
       <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
         <h2 className="text-2xl font-bold mb-6 text-center text-gray-800">Login</h2>
 

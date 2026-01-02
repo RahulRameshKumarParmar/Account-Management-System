@@ -4,6 +4,7 @@ import AccountPage from './pages/Account';
 import { useAppDispatch, useAppSelector } from './hooks';
 import { useEffect } from 'react';
 import { initializeAuth } from './features/authSlice';
+import AdminLogin from './pages/AdminLogin';
 
 // Main App Component
 
@@ -11,7 +12,7 @@ export default function App() {
 
   const dispatch = useAppDispatch();
   const currentPage = useAppSelector((state) => state.auth.currentPage);
-  const isIntialized = useAppSelector((state) => state.auth.isIntialized);
+  const isIntialized = useAppSelector((state) => state.auth.isInitialized);
 
   useEffect(() => {
     dispatch(initializeAuth());
@@ -36,6 +37,9 @@ export default function App() {
       )}
       {currentPage === 'account' && (
         <AccountPage />
+      )}
+      {currentPage === 'adminLogin' && (
+        <AdminLogin />
       )}
     </div>
   );

@@ -175,7 +175,7 @@ export default function RegisterPage() {
                     {/* Submit button */}
                     <button
                         type="submit"
-                        className="w-full bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 transition duration-200"
+                        className="w-full bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 transition duration-200 cursor-pointer"
                     >
                         Register
                     </button>
@@ -186,7 +186,7 @@ export default function RegisterPage() {
                     Already have an account?{' '}
                     <button
                         onClick={() => dispatch(changePage('login'))}
-                        className="text-blue-500 hover:text-blue-700 font-semibold"
+                        className="text-blue-500 hover:text-blue-700 font-semibold cursor-pointer"
                     >
                         Login here
                     </button>
