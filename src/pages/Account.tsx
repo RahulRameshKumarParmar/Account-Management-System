@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import {
+  adminLogout,
   deleteUser,
   logout,
   updateUser,
@@ -23,14 +24,7 @@ export default function AccountPage() {
     phone: currentUser?.phone || "",
   });
   const [success, setSuccess] = useState("");
-  const BgColour: string[] = [
-    "#fca5a5",
-    "#d1d5db",
-    "#d8b4fe",
-    "#86efac",
-    "#fde047",
-    "#93c5fd",
-  ];
+
   const [bg, setBG] = useState<string>("");
   const [profileInitials, setProfileInitials] = useState<string>();
 
@@ -39,16 +33,27 @@ export default function AccountPage() {
   const [searchedData, setSearchedData] = useState("");
   const [filterSearchData, setFilterSearchData] = useState<User[]>([]);
 
-  useEffect(() => {
+  useEffect(() => { 
+    const BgColour: string[] = [
+      "#fca5a5",
+      "#d1d5db",
+      "#d8b4fe",
+      "#86efac",
+      "#fde047",
+      "#93c5fd",
+    ];
+
     if (!currentUser) return;
 
     const randomBgColour =
       BgColour[Math.floor(Math.random() * BgColour.length)];
     setBG(randomBgColour);
 
-    const initials = formData.firstName.charAt(0) + formData.lastName.charAt(0);
+    const initials =
+      formData.firstName.charAt(0).toUpperCase() +
+      formData.lastName.charAt(0).toUpperCase();
     setProfileInitials(initials);
-  }, []);
+  }, [currentUser, formData]);
 
   useEffect(() => {
     if (currentUser) {
@@ -106,9 +111,15 @@ export default function AccountPage() {
     setIsEditing(false);
   };
 
-  const handleLogout = () => {
+  const handleUserLogout = () => {
     if (window.confirm("Are you sure you want to Logout?")) {
       dispatch(logout(formData.email));
+    }
+  };
+
+  const handleAdminLogout = () => {
+    if (window.confirm("Are you sure you want to Logout?")) {
+      dispatch(adminLogout());
     }
   };
 
@@ -138,16 +149,14 @@ export default function AccountPage() {
   };
 
   useEffect(() => {
-    if (filterSearchData.length > 0) {
-      setFilterSearchData([]);
-    }
+    setFilterSearchData([]);
   }, [searchedData]);
 
   return (
     <>
       <div
         className={`min-h-screen py-8 ${
-          adminLog === "false" ? "block" : "hidden"
+          adminLog === "true" ? "hidden" : "block"
         }`}
       >
         <div className="max-w-2xl mx-auto px-4">
@@ -163,7 +172,7 @@ export default function AccountPage() {
                   {profileInitials}
                 </div>
                 <button
-                  onClick={handleLogout}
+                  onClick={handleUserLogout}
                   className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 transition duration-200 cursor-pointer"
                 >
                   Logout
@@ -308,13 +317,13 @@ export default function AccountPage() {
 
       <div
         className={`min-h-screen py-8 ${
-          adminLog === "false" ? "hidden" : "block"
+          adminLog === "true" ? "block" : "hidden"
         }`}
       >
         <div className="flex justify-between items-center px-10 bg-gray-500 p-5 text-white">
           <h2 className="text-2xl">All Users</h2>
           <button
-            onClick={handleLogout}
+            onClick={handleAdminLogout}
             className="text-xl cursor-pointer bg-white hover:bg-gray-200 text-black px-4 py-2 rounded-2xl"
           >
             Logout

@@ -163,6 +163,14 @@ const authSlice = createSlice({
             }
         }),
 
+        adminLogout: ((state) => {
+            state.adminLog = 'false';
+            localStorage.setItem('logginByAdmin', 'false');
+
+            state.currentPage = 'adminLogin';
+            localStorage.setItem('page', 'adminLogin');
+        }),
+
         updateUser: ((state, action) => {
             if (state.currentUser) {
                 const updatedUser = {
@@ -195,5 +203,5 @@ const authSlice = createSlice({
     }
 })
 
-export const { initializeAuth, changePage, login, register, updateUser, logout, deleteUser, adminLogin } = authSlice.actions;
+export const { initializeAuth, changePage, login, register, updateUser, logout, deleteUser, adminLogin, adminLogout } = authSlice.actions;
 export default authSlice.reducer;
