@@ -1,197 +1,335 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { changePage, type User } from "../features/authSlice";
 import { useAppDispatch, useAppSelector } from "../hooks";
 import { register } from "../features/authSlice";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 
 export default function RegisterPage() {
+  const dispatch = useAppDispatch();
+  const users = useAppSelector((state) => state.auth.users);
 
-    const dispatch = useAppDispatch();
-    const users = useAppSelector((state) => state.auth.users);
+  const [formData, setFormData] = useState({
+    email: "",
+    password: "",
+    confirmPassword: "",
+    firstName: "",
+    lastName: "",
+    phone: "",
+  });
+  const [error, setError] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [passwordStrength, setPasswordStrength] = useState<
+    "Weak" | "Medium" | "Strong" | ""
+  >("");
 
-    const [formData, setFormData] = useState({
-        email: '',
-        password: '',
-        confirmPassword: '',
-        firstName: '',
-        lastName: '',
-        phone: ''
+  // Handle input changes
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value,
     });
-    const [error, setError] = useState('');
-    const [showPassword, setShowPassword] = useState(false);
+  };
 
-    // Handle input changes
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setFormData({
-            ...formData,
-            [e.target.name]: e.target.value
-        });
-    };
+  useEffect(() => {
+    const lowerCaseLetters = [
+      "a",
+      "b",
+      "c",
+      "d",
+      "e",
+      "f",
+      "g",
+      "h",
+      "i",
+      "j",
+      "l",
+      "m",
+      "n",
+      "o",
+      "p",
+      "q",
+      "r",
+      "s",
+      "t",
+      "u",
+      "v",
+      "w",
+      "x",
+      "y",
+      "z",
+    ];
 
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        setError('');
+    const upperCaseLetters = [
+      "A",
+      "B",
+      "C",
+      "D",
+      "E",
+      "F",
+      "G",
+      "H",
+      "I",
+      "J",
+      "K",
+      "L",
+      "M",
+      "N",
+      "O",
+      "P",
+      "Q",
+      "R",
+      "S",
+      "T",
+      "U",
+      "V",
+      "W",
+      "X",
+      "Y",
+      "Z",
+    ];
 
-        // Validate all fields are filled
-        if (!formData.email || !formData.password || !formData.firstName || !formData.lastName) {
-            setError('Please fill in all required fields');
-            return;
-        }
+    const numbers = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"];
 
-        // Validate password match
-        if (formData.password !== formData.confirmPassword) {
-            setError('Passwords do not match');
-            return;
-        }
+    const symbols = [
+      "~",
+      "`",
+      "!",
+      "@",
+      "#",
+      "$",
+      "%",
+      "^",
+      "&",
+      "*",
+      "(",
+      ")",
+      "-",
+      "_",
+      "+",
+      "=",
+      ":",
+      ";",
+      "?",
+      "/",
+      ">",
+      ".",
+      "<",
+    ];
 
-        // Validate password length
-        if (formData.password.length < 6) {
-            setError('Password must be at least 6 characters');
-            return;
-        }
+    let hasUpperCase = false;
+    let hasLowerCase = false;
+    let hasNumebers = false;
+    let hasSymbols = false;
 
-        const emailExists = users.some((u: User) => u.email === formData.email);
-        if (emailExists) {
-            setError('Email already exists');
-            return;
-        }
+    for (const char of formData.password) {
+      if (lowerCaseLetters.includes(char)) hasLowerCase = true;
+      if (upperCaseLetters.includes(char)) hasUpperCase = true;
+      if (numbers.includes(char)) hasNumebers = true;
+      if (symbols.includes(char)) hasSymbols = true;
+    }
 
-        // Attempt registration
-        dispatch(register({
-            email: formData.email,
-            password: formData.password,
-            firstName: formData.firstName,
-            lastName: formData.lastName,
-            phone: formData.phone
-        }));
-    };
+    if (formData.password.length < 8) {
+        setPasswordStrength("Weak");
+      }
 
-    return (
-        <div className="flex items-center justify-center min-h-screen py-8">
-            <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
-                <h2 className="text-2xl font-bold mb-6 text-center text-gray-800">Register</h2>
+    if (
+      (formData.password.length >= 8 || formData.password.length <= 12) &&
+      hasLowerCase &&
+      hasUpperCase &&
+      hasNumebers
+    ) {
+      setPasswordStrength("Medium");
+    }
 
-                {error && (
-                    <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-                        {error}
-                    </div>
-                )}
+    if (
+      formData.password.length >= 14 &&
+      hasLowerCase &&
+      hasUpperCase &&
+      hasNumebers &&
+      hasSymbols
+    ) {
+      setPasswordStrength("Strong");
+    }
+  }, [formData.password]);
 
-                <form onSubmit={handleSubmit}>
-                    {/* First Name input */}
-                    <div className="mb-4">
-                        <label className="block text-gray-700 text-sm font-bold mb-2">
-                            First Name *
-                        </label>
-                        <input
-                            type="text"
-                            name="firstName"
-                            value={formData.firstName}
-                            onChange={handleChange}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            placeholder="Enter your first name"
-                        />
-                    </div>
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
 
-                    {/* Last Name input */}
-                    <div className="mb-4">
-                        <label className="block text-gray-700 text-sm font-bold mb-2">
-                            Last Name *
-                        </label>
-                        <input
-                            type="text"
-                            name="lastName"
-                            value={formData.lastName}
-                            onChange={handleChange}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            placeholder="Enter your last name"
-                        />
-                    </div>
+    // Validate all fields are filled
+    if (
+      !formData.email ||
+      !formData.password ||
+      !formData.firstName ||
+      !formData.lastName ||
+      !formData.phone
+    ) {
+      setError("Please fill in all required fields");
+      return;
+    }
 
-                    {/* Email input */}
-                    <div className="mb-4">
-                        <label className="block text-gray-700 text-sm font-bold mb-2">
-                            Email *
-                        </label>
-                        <input
-                            type="email"
-                            name="email"
-                            value={formData.email}
-                            onChange={handleChange}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            placeholder="Enter your email"
-                        />
-                    </div>
+    // Validate password match
+    if (formData.password !== formData.confirmPassword) {
+      setError("Passwords do not match");
+      return;
+    }
 
-                    {/* Phone input */}
-                    <div className="mb-4">
-                        <label className="block text-gray-700 text-sm font-bold mb-2">
-                            Phone
-                        </label>
-                        <input
-                            type="tel"
-                            name="phone"
-                            value={formData.phone}
-                            onChange={handleChange}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            placeholder="Enter your phone number"
-                        />
-                    </div>
+    // Validate password length
+    if (formData.password.length < 6) {
+      setError("Password must be at least 6 characters");
+      return;
+    }
 
-                    {/* Password input */}
-                    <div className="mb-4 relative">
-                        <label className="block text-gray-700 text-sm font-bold mb-2">
-                            Password *
-                        </label>
-                        <input
-                            type={showPassword ? 'text' : 'password'}
-                            name="password"
-                            value={formData.password}
-                            onChange={handleChange}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            placeholder="Enter your password"
-                        />
-                        <span
-                            onClick={() => setShowPassword(!showPassword)}
-                            className="w-fit h-fit text-xl cursor-pointer absolute bottom-2.5 right-3">{showPassword ? <FaEye /> : <FaEyeSlash />}
-                        </span>
-                    </div>
+    const emailExists = users.some((u: User) => u.email === formData.email);
+    if (emailExists) {
+      setError("Email already exists");
+      return;
+    }
 
-                    {/* Confirm Password input */}
-                    <div className="mb-6">
-                        <label className="block text-gray-700 text-sm font-bold mb-2">
-                            Confirm Password *
-                        </label>
-                        <input
-                            type="password"
-                            name="confirmPassword"
-                            value={formData.confirmPassword}
-                            onChange={handleChange}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            placeholder="Confirm your password"
-                        />
-                    </div>
-
-                    {/* Submit button */}
-                    <button
-                        type="submit"
-                        className="w-full bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 transition duration-200 cursor-pointer"
-                    >
-                        Register
-                    </button>
-                </form>
-
-                {/* Link to login page */}
-                <p className="mt-4 text-center text-gray-600 text-sm">
-                    Already have an account?{' '}
-                    <button
-                        onClick={() => dispatch(changePage('login'))}
-                        className="text-blue-500 hover:text-blue-700 font-semibold cursor-pointer"
-                    >
-                        Login here
-                    </button>
-                </p>
-            </div>
-        </div>
+    // Attempt registration
+    dispatch(
+      register({
+        email: formData.email,
+        password: formData.password,
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        phone: formData.phone,
+      }),
     );
+  };
+
+  return (
+    <div className="flex items-center justify-center min-h-screen py-8">
+      <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
+        <h2 className="text-2xl font-bold mb-6 text-center text-gray-800">
+          Register
+        </h2>
+
+        {error && (
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+            {error}
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit}>
+          {/* First Name input */}
+          <div className="mb-4">
+            <label className="block text-gray-700 text-sm font-bold mb-2">
+              First Name *
+            </label>
+            <input
+              type="text"
+              name="firstName"
+              value={formData.firstName}
+              onChange={handleChange}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Enter your first name"
+            />
+          </div>
+
+          {/* Last Name input */}
+          <div className="mb-4">
+            <label className="block text-gray-700 text-sm font-bold mb-2">
+              Last Name *
+            </label>
+            <input
+              type="text"
+              name="lastName"
+              value={formData.lastName}
+              onChange={handleChange}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Enter your last name"
+            />
+          </div>
+
+          {/* Email input */}
+          <div className="mb-4">
+            <label className="block text-gray-700 text-sm font-bold mb-2">
+              Email *
+            </label>
+            <input
+              type="email"
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Enter your email"
+            />
+          </div>
+
+          {/* Phone input */}
+          <div className="mb-4">
+            <label className="block text-gray-700 text-sm font-bold mb-2">
+              Phone
+            </label>
+            <input
+              type="tel"
+              name="phone"
+              value={formData.phone}
+              onChange={handleChange}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Enter your phone number"
+            />
+          </div>
+
+          {/* Password input */}
+          <div className="mb-2 relative">
+            <label className="block text-gray-700 text-sm font-bold mb-2">
+              Password *
+            </label>
+            <input
+              type={showPassword ? "text" : "password"}
+              name="password"
+              value={formData.password}
+              onChange={handleChange}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Enter your password"
+            />
+            <span
+              onClick={() => setShowPassword(!showPassword)}
+              className="w-fit h-fit text-xl cursor-pointer absolute bottom-2.5 right-3"
+            >
+              {showPassword ? <FaEye /> : <FaEyeSlash />}
+            </span>
+          </div>
+
+          <div className={`border-4 rounded-lg ps-3 py-1.5 mb-2 ${passwordStrength === 'Weak' ? 'border-gray-400' : passwordStrength === 'Medium' ? 'border-yellow-200' : 'border-green-200'}`}>{passwordStrength}</div>
+
+          {/* Confirm Password input */}
+          <div className="mb-6">
+            <label className="block text-gray-700 text-sm font-bold mb-2">
+              Confirm Password *
+            </label>
+            <input
+              type="password"
+              name="confirmPassword"
+              value={formData.confirmPassword}
+              onChange={handleChange}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Confirm your password"
+            />
+          </div>
+
+          {/* Submit button */}
+          <button
+            type="submit"
+            className="w-full bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 transition duration-200 cursor-pointer"
+          >
+            Register
+          </button>
+        </form>
+
+        {/* Link to login page */}
+        <p className="mt-4 text-center text-gray-600 text-sm">
+          Already have an account?{" "}
+          <button
+            onClick={() => dispatch(changePage("login"))}
+            className="text-blue-500 hover:text-blue-700 font-semibold cursor-pointer"
+          >
+            Login here
+          </button>
+        </p>
+      </div>
+    </div>
+  );
 }

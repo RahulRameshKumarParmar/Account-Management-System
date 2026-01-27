@@ -9,6 +9,7 @@ export interface User {
     firstName: string;
     lastName: string;
     phone: string;
+    firstTimeLogin: number;
     lastLogin?: number;
 }
 
@@ -131,12 +132,13 @@ const authSlice = createSlice({
             }
         }),
 
-        register: ((state, action: PayloadAction<Omit<User, 'id'>>) => {
+        register: ((state, action: PayloadAction<Omit<User, 'id' | 'firstTimeLogin'>>) => {
 
             // Create new user with unique ID
             const newUser: User = {
                 ...action.payload,
-                id: Date.now().toString()
+                id: Date.now().toString(),
+                firstTimeLogin: Date.now()
             };
 
             state.users.push(newUser);
