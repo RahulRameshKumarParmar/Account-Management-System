@@ -3,6 +3,8 @@ import { changePage, type User } from "../features/authSlice";
 import { useAppDispatch, useAppSelector } from "../hooks";
 import { register } from "../features/authSlice";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
+import { TiTick } from "react-icons/ti";
+import { ImCross } from "react-icons/im";
 
 export default function RegisterPage() {
   const dispatch = useAppDispatch();
@@ -21,6 +23,9 @@ export default function RegisterPage() {
   const [passwordStrength, setPasswordStrength] = useState<
     "Weak" | "Medium" | "Strong" | ""
   >("");
+
+  const [emailIsValid, setEmailIsValid] = useState(false);
+  const [emailErrorPopUpMessage, setEmailPopUpErrorMessage] = useState(false);
 
   // Handle input changes
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -129,8 +134,8 @@ export default function RegisterPage() {
     }
 
     if (formData.password.length < 8) {
-        setPasswordStrength("Weak");
-      }
+      setPasswordStrength("Weak");
+    }
 
     if (
       (formData.password.length >= 8 || formData.password.length <= 12) &&
@@ -151,6 +156,17 @@ export default function RegisterPage() {
       setPasswordStrength("Strong");
     }
   }, [formData.password]);
+
+  useEffect(() => {
+    const emailValidations = '@gmail.com';
+
+    if (formData.email.includes(emailValidations)) {
+      setEmailIsValid(true);
+    }
+    else {
+      setEmailIsValid(false);
+    }
+  }, [formData.email])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -243,7 +259,7 @@ export default function RegisterPage() {
           </div>
 
           {/* Email input */}
-          <div className="mb-4">
+          <div className="mb-4 relative">
             <label className="block text-gray-700 text-sm font-bold mb-2">
               Email *
             </label>
@@ -255,6 +271,25 @@ export default function RegisterPage() {
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="Enter your email"
             />
+
+
+            {formData.email !== "" ?
+              <span
+                onMouseEnter={() => {
+                  if (!emailIsValid) {
+                    setEmailPopUpErrorMessage(true)
+                  }
+                }}
+                onMouseLeave={() => {
+                  setEmailPopUpErrorMessage(false);
+                }} className="absolute right-2 top-10">{emailIsValid ? <TiTick size={20} color="green" /> : <ImCross color="red" size={15} />}</span>
+              :
+              null
+            }
+
+            <span className={` ${emailErrorPopUpMessage ? 'block' : 'hidden'} absolute -top-2 -right-5 bg-white transition w-30 text-xs px-3 py-1.5 border border-red-300 rounded-lg`}>
+              Email id is invalid
+            </span>
           </div>
 
           {/* Phone input */}
@@ -293,7 +328,7 @@ export default function RegisterPage() {
             </span>
           </div>
 
-          <div className={`border-4 rounded-lg ps-3 py-1.5 mb-2 ${passwordStrength === 'Weak' ? 'border-gray-400' : passwordStrength === 'Medium' ? 'border-yellow-200' : 'border-green-200'}`}>{passwordStrength}</div>
+          <div className={`${formData.password === "" ? 'hidden' : 'block'} border-4 rounded-lg ps-3 py-1.5 mb-2 ${passwordStrength === 'Weak' ? 'border-gray-300' : passwordStrength === 'Medium' ? 'border-yellow-200' : 'border-green-200'}`}>{passwordStrength}</div>
 
           {/* Confirm Password input */}
           <div className="mb-6">

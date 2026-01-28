@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { changePage, login } from "../features/authSlice";
 import { useAppDispatch, useAppSelector } from "../hooks";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
+import { TiTick } from "react-icons/ti";
+import { ImCross } from "react-icons/im";
 
 export default function LoginPage() {
 
@@ -16,6 +18,9 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [rememberMe, setRememberMe] = useState<boolean>(true);
 
+  const [emailIsValid, setEmailIsValid] = useState(false);
+  const [emailErrorPopUpMessage, setEmailPopUpErrorMessage] = useState(false);
+
   useEffect(() => {
     if (currentUser && rememberMe) {
       setEmail(currentUser.email || '');
@@ -23,7 +28,19 @@ export default function LoginPage() {
     }
   }, [currentUser, rememberMe])
 
+  useEffect(() => {
+    const emailValidations = '@gmail.com';
+
+    if (email.includes(emailValidations)) {
+      setEmailIsValid(true);
+    }
+    else {
+      setEmailIsValid(false);
+    }
+  }, [email])
+
   const handleSubmit = (e: React.FormEvent) => {
+
     e.preventDefault();
     setError('');
 
@@ -63,7 +80,7 @@ export default function LoginPage() {
 
         <form onSubmit={handleSubmit}>
           {/* Email input */}
-          <div className="mb-4">
+          <div className="mb-4 relative">
             <label className="block text-gray-700 text-sm font-bold mb-2">
               Email
             </label>
@@ -74,6 +91,25 @@ export default function LoginPage() {
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="Enter your email"
             />
+
+            {email !== "" ?
+              <span
+                onMouseEnter={() => {
+                  if (!emailIsValid) {
+                    setEmailPopUpErrorMessage(true)
+                  }
+                }}
+                onMouseLeave={() => {
+                  setEmailPopUpErrorMessage(false);
+                }} className="absolute right-2 top-10">{emailIsValid ? <TiTick size={20} color="green" /> : <ImCross color="red" size={15} />}</span>
+              :
+              null
+            }
+
+            <span className={` ${emailErrorPopUpMessage ? 'block' : 'hidden'} absolute -top-2 -right-5 bg-white transition w-30 text-xs px-3 py-1.5 border border-red-300 rounded-lg`}>
+              Email id is invalid
+            </span>
+
           </div>
 
           {/* Password input */}

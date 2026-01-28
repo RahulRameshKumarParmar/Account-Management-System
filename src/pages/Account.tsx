@@ -13,6 +13,7 @@ import { FaSearch } from "react-icons/fa";
 export default function AccountPage() {
   const dispatch = useAppDispatch();
   const currentUser = useAppSelector((state) => state.auth.currentUser);
+
   const users = useAppSelector((state) => state.auth.users);
   const adminLog = useAppSelector((state) => state.auth.adminLog);
 
@@ -32,8 +33,9 @@ export default function AccountPage() {
 
   const [searchedData, setSearchedData] = useState("");
   const [filterSearchData, setFilterSearchData] = useState<User[]>([]);
+  const [accountCreatedDate, setAccountCreatedDate] = useState('');
 
-  useEffect(() => { 
+  useEffect(() => {
     const BgColour: string[] = [
       "#fca5a5",
       "#d1d5db",
@@ -83,6 +85,15 @@ export default function AccountPage() {
     const days = Math.floor(hrs / 24);
     if (days > 1) return `Last Login ${days} days ago`;
   };
+
+  useEffect(() => {
+    const accountCreated = () => {
+      const date = new Date(Number(currentUser?.firstTimeLogin));
+      const formatedDate = date.toISOString().split('T')[0];
+      setAccountCreatedDate(formatedDate);
+    }
+    accountCreated()
+  }, [currentUser]);
 
   // Handle input changes in edit mode
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -155,15 +166,15 @@ export default function AccountPage() {
   return (
     <>
       <div
-        className={`min-h-screen py-8 ${
-          adminLog === "true" ? "hidden" : "block"
-        }`}
+        className={`min-h-screen py-8 ${adminLog === "true" ? "hidden" : "block"
+          }`}
       >
         <div className="max-w-2xl mx-auto px-4">
           <div className="bg-white rounded-lg shadow-md p-8">
             {/* Header with logout button */}
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-2xl font-bold text-gray-800">My Account</h2>
+              <span>Account Created: {accountCreatedDate}</span>
               <div className="flex items-center">
                 <div
                   style={{ backgroundColor: bg }}
@@ -316,9 +327,8 @@ export default function AccountPage() {
       </div>
 
       <div
-        className={`min-h-screen py-8 ${
-          adminLog === "true" ? "block" : "hidden"
-        }`}
+        className={`min-h-screen py-8 ${adminLog === "true" ? "block" : "hidden"
+          }`}
       >
         <div className="flex justify-between items-center px-10 bg-gray-500 p-5 text-white">
           <h2 className="text-2xl">All Users</h2>
@@ -349,9 +359,8 @@ export default function AccountPage() {
 
         <div className="flex items-center justify-center h-[60vh]">
           <table
-            className={`border-separate border-spacing-4 ${
-              searchedData ? "hidden" : "block"
-            }`}
+            className={`border-separate border-spacing-4 ${searchedData ? "hidden" : "block"
+              }`}
           >
             <thead className="border border-gray-300 rounded-2xl p-5 font-bold">
               <tr>
@@ -374,9 +383,8 @@ export default function AccountPage() {
           </table>
 
           <table
-            className={`border-separate border-spacing-4 ${
-              searchedData && filterSearchData.length > 0 ? "block" : "hidden"
-            }`}
+            className={`border-separate border-spacing-4 ${searchedData && filterSearchData.length > 0 ? "block" : "hidden"
+              }`}
           >
             <thead className="border border-gray-300 rounded-2xl p-5 font-bold">
               <tr>
@@ -400,12 +408,11 @@ export default function AccountPage() {
           </table>
 
           <div
-            className={`${
-              (!searchedData && filterSearchData.length !== 0) ||
+            className={`${(!searchedData && filterSearchData.length !== 0) ||
               (!searchedData && users.length === 0)
-                ? "block"
-                : "hidden"
-            }`}
+              ? "block"
+              : "hidden"
+              }`}
           >
             No Data Found
           </div>
