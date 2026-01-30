@@ -2,8 +2,7 @@ import { useEffect, useState } from "react";
 import { changePage, login } from "../features/authSlice";
 import { useAppDispatch, useAppSelector } from "../hooks";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
-import { TiTick } from "react-icons/ti";
-import { ImCross } from "react-icons/im";
+import EmailValidation from "../components/EmailValidation";
 
 export default function LoginPage() {
 
@@ -18,26 +17,12 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [rememberMe, setRememberMe] = useState<boolean>(true);
 
-  const [emailIsValid, setEmailIsValid] = useState(false);
-  const [emailErrorPopUpMessage, setEmailPopUpErrorMessage] = useState(false);
-
   useEffect(() => {
     if (currentUser && rememberMe) {
       setEmail(currentUser.email || '');
       setPassword(currentUser.password || '');
     }
   }, [currentUser, rememberMe])
-
-  useEffect(() => {
-    const emailValidations = '@gmail.com';
-
-    if (email.includes(emailValidations)) {
-      setEmailIsValid(true);
-    }
-    else {
-      setEmailIsValid(false);
-    }
-  }, [email])
 
   const handleSubmit = (e: React.FormEvent) => {
 
@@ -92,23 +77,7 @@ export default function LoginPage() {
               placeholder="Enter your email"
             />
 
-            {email !== "" ?
-              <span
-                onMouseEnter={() => {
-                  if (!emailIsValid) {
-                    setEmailPopUpErrorMessage(true)
-                  }
-                }}
-                onMouseLeave={() => {
-                  setEmailPopUpErrorMessage(false);
-                }} className="absolute right-2 top-10">{emailIsValid ? <TiTick size={20} color="green" /> : <ImCross color="red" size={15} />}</span>
-              :
-              null
-            }
-
-            <span className={` ${emailErrorPopUpMessage ? 'block' : 'hidden'} absolute -top-2 -right-5 bg-white transition w-30 text-xs px-3 py-1.5 border border-red-300 rounded-lg`}>
-              Email id is invalid
-            </span>
+            <EmailValidation email={email}/>
 
           </div>
 
@@ -130,9 +99,16 @@ export default function LoginPage() {
             </span>
           </div>
 
-          <div className="mb-3 flex items-center gap-2">
-            <input className="cursor-pointer" checked={rememberMe} onChange={(e) => setRememberMe(e.target.checked)} type="checkbox" />
-            <span>Remember Me</span>
+          <div className="mb-3 flex items-center justify-between gap-2">
+            <div>
+              <input className="cursor-pointer me-2" checked={rememberMe} onChange={(e) => setRememberMe(e.target.checked)} type="checkbox" />
+              <span>Remember Me</span>
+            </div>
+            <div>
+              <button onClick={() => dispatch(changePage('forget'))} className="text-blue-500 font-bold text-sm cursor-pointer">
+                Forget Password ?
+              </button>
+            </div>
           </div>
 
           {/* Submit button */}

@@ -87,6 +87,11 @@ export default function AccountPage() {
   };
 
   useEffect(() => {
+    if(!currentUser?.firstTimeLogin){
+      setAccountCreatedDate('N/A');
+      return;
+    }
+    
     const accountCreated = () => {
       const date = new Date(Number(currentUser?.firstTimeLogin));
       const formatedDate = date.toISOString().split('T')[0];

@@ -1,6 +1,6 @@
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
 
-type Page = 'login' | 'register' | 'account' | 'adminLogin';
+type Page = 'login' | 'register' | 'account' | 'adminLogin' | 'forget';
 
 export interface User {
     id: string;
@@ -79,7 +79,7 @@ const authSlice = createSlice({
 
             // Loading current page from localStorage
             const storedPage = localStorage.getItem('page');
-            if (storedPage === 'login' || storedPage === 'register' || storedPage === 'account') {
+            if (storedPage === 'login' || storedPage === 'register' || storedPage === 'account' || storedPage === 'forget' || storedPage ==='adminLogin') {
                 state.currentPage = storedPage;
             }
 

@@ -5,6 +5,7 @@ import { useAppDispatch, useAppSelector } from './hooks';
 import { useEffect } from 'react';
 import { initializeAuth } from './features/authSlice';
 import AdminLogin from './pages/AdminLogin';
+import ForgetPage from './pages/Forget';
 
 // Main App Component
 
@@ -40,6 +41,9 @@ export default function App() {
       )}
       {currentPage === 'adminLogin' && (
         <AdminLogin />
+      )}
+      {currentPage === 'forget' && (
+        <ForgetPage />
       )}
     </div>
   );
