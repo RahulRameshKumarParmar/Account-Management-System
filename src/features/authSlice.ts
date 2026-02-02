@@ -1,6 +1,6 @@
-import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
+import { createAsyncThunk, createSlice, type PayloadAction } from "@reduxjs/toolkit";
 
-type Page = 'login' | 'register' | 'account' | 'adminLogin' | 'forget';
+type Page = 'login' | 'register' | 'account' | 'adminLogin' | 'forget' | 'resetPassword';
 
 export interface User {
     id: string;
@@ -13,12 +13,21 @@ export interface User {
     lastLogin?: number;
 }
 
+interface OTPData {
+    email: string;
+    otp: number;
+    expiresAt: number;
+}
+
 interface States {
     currentPage: Page,
     users: User[],
     currentUser: User | null,
     isInitialized: boolean,
     adminLog: 'false' | 'true',
+    otpData: OTPData | null,
+    otpLoading: boolean,
+    otpError: string | null,
 }
 
 export interface AuthContextType {
@@ -36,12 +45,15 @@ const initialState: States = {
     currentUser: null,
     isInitialized: false,
     adminLog: 'false',
+    otpData: null,
+    otpLoading: false,
+    otpError: null,
 }
 
 // Safely parse JSON from localStorage
 // Returns default value if parsing fails
 
-const safeParseJSON = <T>(key: string, defaultValue: T): T => {
+export const safeParseJSON = <T>(key: string, defaultValue: T): T => {
     try {
         const item = localStorage.getItem(key);
         return item ? JSON.parse(item) : defaultValue;
@@ -54,7 +66,7 @@ const safeParseJSON = <T>(key: string, defaultValue: T): T => {
 
 // Safely save data to localStorage
 
-const safeSaveToLocalStorage = <T>(key: string, value: T): void => {
+export const safeSaveToLocalStorage = <T>(key: string, value: T): void => {
     try {
         localStorage.setItem(key, JSON.stringify(value));
     }
@@ -62,6 +74,46 @@ const safeSaveToLocalStorage = <T>(key: string, value: T): void => {
         console.error(`Error while saving ${key} to localStorage:`, error);
     }
 };
+
+export const generateOTPAsync = createAsyncThunk(
+    'auth.generatorOTP',
+    async (email: string) => {
+        const otp = Math.floor(100000 + Math.random() * 900000);
+
+        const otpData: OTPData = {
+            email,
+            otp,
+            expiresAt: Date.now() + 60_00000,
+        }
+
+        safeSaveToLocalStorage('OTP', otpData);
+        console.log("OTP Generated: ", otp);
+
+        return otpData;
+    }
+)
+
+export const verifyOTPAsync = createAsyncThunk(
+    'auth/verifyOTP',
+    async (enteredOTP: string, { getState, rejectWithValue }) => {
+        const { otpData } = (getState() as { auth: States }).auth;
+
+        //Check if OTP exists
+        if (!otpData) {
+            return rejectWithValue('OTP not found');
+        }
+
+        if (Date.now() > otpData.expiresAt) {
+            return rejectWithValue('OTP is expired');
+        }
+
+        if (otpData.otp.toString() !== enteredOTP) {
+            return rejectWithValue('Invalid OTP');
+        }
+        localStorage.removeItem('OTP');
+        return otpData.email;
+    }
+)
 
 const authSlice = createSlice({
     name: "auth",
@@ -79,7 +131,7 @@ const authSlice = createSlice({
 
             // Loading current page from localStorage
             const storedPage = localStorage.getItem('page');
-            if (storedPage === 'login' || storedPage === 'register' || storedPage === 'account' || storedPage === 'forget' || storedPage ==='adminLogin') {
+            if (storedPage === 'login' || storedPage === 'register' || storedPage === 'account' || storedPage === 'forget' || storedPage === 'adminLogin' || storedPage === 'resetPassword') {
                 state.currentPage = storedPage;
             }
 
@@ -89,9 +141,13 @@ const authSlice = createSlice({
                 const adminLogStatus = isAdminLog ? JSON.parse(isAdminLog) : null;
                 state.adminLog = adminLogStatus;
             }
-            catch(error){
+            catch (error) {
                 console.error('Error while parsing data from local Storage: ' + error);
             }
+
+            const storedOTP = safeParseJSON<OTPData | null>('OTP', null);
+
+            state.otpData = storedOTP && Date.now() <= storedOTP.expiresAt ? storedOTP : null;
 
             // Mark as initialize
             state.isInitialized = true;
@@ -202,8 +258,56 @@ const authSlice = createSlice({
             state.currentPage = 'login';
             localStorage.setItem('page', 'login');
         }),
+
+        clearOTP(state) {
+            state.otpData = null;
+            state.otpError = null;
+            localStorage.removeItem('OTP');
+        },
+
+        updateNewPassword(state, action:PayloadAction<string>) {
+            const getUser = state.users.find((user) => user.email === state.otpData?.email);
+            console.log(getUser);
+
+            if (!getUser) return;
+
+            if (getUser) {
+                getUser.password = action.payload;
+                safeSaveToLocalStorage('users', state.users);
+                state.currentPage = 'login';
+            }
+        },
+    },
+    extraReducers: builder => {
+        builder
+
+            .addCase(generateOTPAsync.pending, state => {
+                state.otpLoading = true;
+                state.otpError = null;
+            })
+            .addCase(generateOTPAsync.fulfilled, (state, action) => {
+                state.otpLoading = false;
+                state.otpData = action.payload;
+            })
+            .addCase(generateOTPAsync.rejected, (state, action) => {
+                state.otpLoading = false;
+                state.otpError = action.error.message || 'OTP failed';
+            })
+
+            .addCase(verifyOTPAsync.pending, state => {
+                state.otpLoading = true;
+                state.otpError = null;
+            })
+            .addCase(verifyOTPAsync.fulfilled, state => {
+                state.otpLoading = false;
+                state.currentPage = 'resetPassword';
+            })
+            .addCase(verifyOTPAsync.rejected, (state, action) => {
+                state.otpLoading = false;
+                state.otpError = action.payload as string;
+            });
     }
 })
 
-export const { initializeAuth, changePage, login, register, updateUser, logout, deleteUser, adminLogin, adminLogout } = authSlice.actions;
+export const { initializeAuth, changePage, login, register, updateUser, logout, deleteUser, adminLogin, adminLogout, clearOTP, updateNewPassword } = authSlice.actions;
 export default authSlice.reducer;

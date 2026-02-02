@@ -6,6 +6,7 @@ import { useEffect } from 'react';
 import { initializeAuth } from './features/authSlice';
 import AdminLogin from './pages/AdminLogin';
 import ForgetPage from './pages/Forget';
+import ResetPassword from './pages/ResetPassword';
 
 // Main App Component
 
@@ -19,8 +20,8 @@ export default function App() {
     dispatch(initializeAuth());
   }, [dispatch])
 
-  if(!isIntialized){
-    return(
+  if (!isIntialized) {
+    return (
       <div className='min-h-screen bg-gray-100 flex items-center justify-center'>
         <div className='text-gray-600'>Loading...</div>
       </div>
@@ -44,6 +45,9 @@ export default function App() {
       )}
       {currentPage === 'forget' && (
         <ForgetPage />
+      )}
+      {currentPage === 'resetPassword' && (
+        <ResetPassword />
       )}
     </div>
   );

@@ -1,39 +1,79 @@
-import React, { useState } from "react"
+import React, { useRef, useState } from "react"
 import EmailValidation from "../components/EmailValidation";
 import { MdKeyboardArrowLeft } from "react-icons/md";
-import { changePage } from "../features/authSlice";
+import { changePage, generateOTPAsync, verifyOTPAsync } from "../features/authSlice";
 import { useAppDispatch, useAppSelector } from "../hooks";
 
 export default function ForgetPage() {
     const dispatch = useAppDispatch();
     const users = useAppSelector((state) => state.auth.users);
+    const otpError = useAppSelector((state) => state.auth.otpError);
+    const otpLoading = useAppSelector((state) => state.auth.otpLoading);
 
     const [email, setEmail] = useState('');
     const [error, setError] = useState('');
+    const [showOTPsection, setShowOTPsection] = useState(false);
+    const [OTP, setOTP] = useState<string[]>(Array(6).fill(''));
+    const inputsRef = useRef<HTMLInputElement[]>([]);
 
     const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
 
-        if(email === ''){
+        if (email === '') {
             setError('Please enter your email first');
             return;
         }
 
+
         const findUser = users.some((user) => user.email === email);
-        
-        if(findUser === false){
+
+        if (findUser === false) {
             setError("Email id doesn't exist");
+            setShowOTPsection(false);
             return;
         }
-        else{
+        if (findUser === true) {
             setError('');
+            setShowOTPsection(true);
+            dispatch(generateOTPAsync(email));
         }
-
     }
 
     const handleBackToLogin = () => {
         dispatch(changePage('login'))
     }
+
+    const handleChange = (value: string, index: number) => {
+        if (!/^\d?$/.test(value)) return; // Only Numbers
+
+        const newOTP = [...OTP];
+        newOTP[index] = value;
+        setOTP(newOTP);
+
+        if (value && index < length - 1) {
+            inputsRef.current[index + 1].focus();
+        }
+    };
+
+    const handleKeyDown = (e: React.KeyboardEvent, index: number) => {
+        if (e.key === 'Backspace' && !OTP[index] && index > 0) {
+            inputsRef.current[index - 1].focus();
+        }
+    };
+
+    const handleVerifyOTP = () => {
+        const enteredOTP = OTP.join("");
+
+        if (enteredOTP.length !== 6) {
+            setError('Please enter complete OTP');
+            return;
+        }
+
+        setError("");
+
+        dispatch(verifyOTPAsync(enteredOTP));
+    }
+
     return (
         <div className="relative bg-[whitesmoke] min-h-screen">
             <div className="bg-[#2222b9] w-screen h-[27vh] z-0"></div>
@@ -46,40 +86,83 @@ export default function ForgetPage() {
                 <h2 className="text-2xl font-bold mb-5 text-center text-gray-800">Forget Password</h2>
                 <p className="text-center text-sm text-gray-500 mb-6">Enter your email and we'll send you a link to reset password</p>
 
+                {/* Other Error */}
                 {error && (
                     <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
                         {error}
                     </div>
                 )}
-                <form onSubmit={handleSubmit}>
-                    {/* Email input */}
-                    <div className="mb-4 relative">
-                        <label className="block text-gray-700 text-sm font-bold mb-2">
-                            Emails
-                        </label>
-                        <input
-                            type="email"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            placeholder="Enter your email"
-                        />
 
-                        <EmailValidation email={email} />
+                {/* OTP Error */}
+                {otpError && (
+                    <div className="bg-red-100 text-red-700 p-3 rounded mb-3">
+                        {otpError}
+                    </div>
+                )}
+
+                {!showOTPsection
+                    ?
+                    <form onSubmit={handleSubmit}>
+                        {/* Email input */}
+                        <div className="mb-4 relative">
+                            <label className="block text-gray-700 text-sm font-bold mb-2">
+                                Emails
+                            </label>
+                            <input
+                                type="email"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                placeholder="Enter your email"
+                            />
+
+                            <EmailValidation email={email} />
+
+                            <button
+                                className="mt-6 w-full text-white bg-[#2222b9] py-2 rounded-lg font-bold cursor-pointer hover:bg-[#2222b9c7]">
+                                Submit
+                            </button>
+
+                            <button
+                                onClick={handleBackToLogin}
+                                className="text-gray-500 w-full flex items-center justify-center cursor-pointer mt-6 hover:text-[#2222b9]">
+                                <MdKeyboardArrowLeft size={25} />
+                                Back to Login
+                            </button>
+                        </div>
+                    </form>
+                    :
+                    <div className="flex gap-3 items-center justify-center flex-col">
+                        <div className="flex gap-3 items-center justify-center">
+                            {OTP.map((digit, index) => (
+                                <input
+                                    key={index}
+                                    type="text"
+                                    ref={(el) => {
+                                        if (el) {
+                                            inputsRef.current[index] = el;
+                                        }
+                                    }}
+                                    inputMode="numeric"
+                                    maxLength={1}
+                                    value={digit}
+                                    onChange={(e) => handleChange(e.target.value, index)}
+                                    onKeyDown={(e) => handleKeyDown(e, index)}
+                                    className="w-12 h-12 text-center text-xl border rounded-md focus:outline-none focus:ring-2 focus:ring-black"
+                                />
+                            ))}
+                        </div>
 
                         <button
-                            className="mt-6 w-full text-white bg-[#2222b9] py-2 rounded-lg font-bold cursor-pointer hover:bg-[#2222b9c7]">
-                            Submit
-                        </button>
-
-                        <button
-                            onClick={handleBackToLogin}
-                            className="text-gray-500 w-full flex items-center justify-center cursor-pointer mt-6 hover:text-[#2222b9]">
-                            <MdKeyboardArrowLeft size={25} />
-                            Back to Login
+                            onClick={handleVerifyOTP}
+                            disabled={otpLoading}
+                            className="w-full bg-[#2222b9] text-white py-2 rounded-2xl mt-4"
+                        >
+                            {otpLoading ? "Verifying..." : "VerifyOTP"}
                         </button>
                     </div>
-                </form>
+
+                }
             </div>
         </div>
     )
